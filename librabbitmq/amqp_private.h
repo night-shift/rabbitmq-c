@@ -72,6 +72,7 @@
 #elif defined(_MSC_VER)
 #define AMQP_NORETURN __declspec(noreturn)
 #define AMQP_UNUSED __pragma(warning(suppress:4100))
+#error fail
 #else
 #define AMQP_NORETURN
 #define AMQP_UNUSED
