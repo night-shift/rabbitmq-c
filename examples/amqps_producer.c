@@ -115,6 +115,8 @@ int main(int argc, char const *const *argv)
 {
   char const *hostname;
   int port, status;
+  int hascacert = 0;
+  int nextarg = 0;
   int rate_limit;
   int message_count;
   amqp_socket_t *socket;
@@ -122,7 +124,7 @@ int main(int argc, char const *const *argv)
 
   if (argc < 5) {
     fprintf(stderr, "Usage: amqps_producer host port rate_limit message_count "
-            "[cacert.pem [key.pem cert.pem]]\n");
+            "[cacert.pem [verifypeer] [verifyhostname] [key.pem cert.pem]]\n");
     return 1;
   }
 
@@ -138,15 +140,28 @@ int main(int argc, char const *const *argv)
     die("creating SSL/TLS socket");
   }
 
+  amqp_ssl_socket_set_verify_peer(socket, 0);
+  amqp_ssl_socket_set_verify_hostname(socket, 0);
+
   if (argc > 5) {
     status = amqp_ssl_socket_set_cacert(socket, argv[5]);
     if (status) {
       die("setting CA certificate");
     }
+    hascacert = 1;
+    nextarg = 6;
+    if (argc > nextarg && !strcmp("verifypeer", argv[nextarg])) {
+      amqp_ssl_socket_set_verify_peer(socket, 1);
+      nextarg++;
+    }
+    if (argc > nextarg && !strcmp("verifyhostname", argv[nextarg])) {
+      amqp_ssl_socket_set_verify_hostname(socket, 1);
+      nextarg++;
+    }
   }
 
-  if (argc > 7) {
-    status = amqp_ssl_socket_set_key(socket, argv[7], argv[6]);
+  if (hascacert && argc > nextarg + 1) {
+    status = amqp_ssl_socket_set_key(socket, argv[nextarg + 1], argv[nextarg]);
     if (status) {
       die("setting client cert");
     }
