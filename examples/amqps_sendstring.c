@@ -51,8 +51,6 @@ int main(int argc, char const *const *argv)
 {
   char const *hostname;
   int port, status;
-  int hascacert = 0;
-  int nextarg = 0;
   char const *exchange;
   char const *routingkey;
   char const *messagebody;
@@ -83,12 +81,11 @@ int main(int argc, char const *const *argv)
   amqp_ssl_socket_set_verify_hostname(socket, 0);
 
   if (argc > 6) {
+    int nextarg = 7;
     status = amqp_ssl_socket_set_cacert(socket, argv[6]);
     if (status) {
       die("setting CA certificate");
     }
-    hascacert = 1;
-    nextarg = 7;
     if (argc > nextarg && !strcmp("verifypeer", argv[nextarg])) {
       amqp_ssl_socket_set_verify_peer(socket, 1);
       nextarg++;
@@ -97,12 +94,12 @@ int main(int argc, char const *const *argv)
       amqp_ssl_socket_set_verify_hostname(socket, 1);
       nextarg++;
     }
-  }
-
-  if (hascacert && argc > nextarg + 1) {
-    status = amqp_ssl_socket_set_key(socket, argv[nextarg + 1], argv[nextarg]);
-    if (status) {
-      die("setting client cert");
+    if (argc > nextarg + 1) {
+      status =
+          amqp_ssl_socket_set_key(socket, argv[nextarg + 1], argv[nextarg]);
+      if (status) {
+        die("setting client cert");
+      }
     }
   }
 
