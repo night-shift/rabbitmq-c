@@ -1,4 +1,3 @@
-/* vim:set ft=c ts=2 sw=2 sts=2 et cindent: */
 #ifndef librabbitmq_amqp_openssl_hostname_validation_h
 #define librabbitmq_amqp_openssl_hostname_validation_h
 
@@ -31,7 +30,7 @@
  * https://wiki.openssl.org/index.php/Hostname_validation
  */
 
-#include <openssl/x509v3.h>
+#include <openssl/ossl_typ.h>
 
 typedef enum {
   AMQP_HVR_MATCH_FOUND,

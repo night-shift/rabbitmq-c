@@ -1,4 +1,3 @@
-# vim:set ts=2 sw=2 sts=2 et:
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${LIBRABBITMQ_INCLUDE_DIRS} ${POPT_INCLUDE_DIR})
 
 if (WIN32)
@@ -63,7 +62,7 @@ if (BUILD_TOOLS_DOCS)
       string( REGEX REPLACE "^[.]" "" fileExt ${fileExt} )
       install(
         FILES ${file}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man${fileExt}
+        DESTINATION ${CMAKE_INSTALL_MANDIR}/man${fileExt}
         )
     endforeach()
 

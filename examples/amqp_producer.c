@@ -1,4 +1,3 @@
-/* vim:set ft=c ts=2 sw=2 sts=2 et cindent: */
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Version: MIT
@@ -34,24 +33,20 @@
  * ***** END LICENSE BLOCK *****
  */
 
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <stdint.h>
-#include <amqp_tcp_socket.h>
 #include <amqp.h>
-#include <amqp_framing.h>
+#include <amqp_tcp_socket.h>
 
 #include "utils.h"
 
 #define SUMMARY_EVERY_US 1000000
 
-static void send_batch(amqp_connection_state_t conn,
-                       char const *queue_name,
-                       int rate_limit,
-                       int message_count)
-{
+static void send_batch(amqp_connection_state_t conn, char const *queue_name,
+                       int rate_limit, int message_count) {
   uint64_t start_time = now_microseconds();
   int i;
   int sent = 0;
@@ -72,21 +67,18 @@ static void send_batch(amqp_connection_state_t conn,
   for (i = 0; i < message_count; i++) {
     uint64_t now = now_microseconds();
 
-    die_on_error(amqp_basic_publish(conn,
-                                    1,
-                                    amqp_cstring_bytes("amq.direct"),
-                                    amqp_cstring_bytes(queue_name),
-                                    0,
-                                    0,
-                                    NULL,
+    die_on_error(amqp_basic_publish(conn, 1, amqp_cstring_bytes("amq.direct"),
+                                    amqp_cstring_bytes(queue_name), 0, 0, NULL,
                                     message_bytes),
                  "Publishing");
     sent++;
     if (now > next_summary_time) {
       int countOverInterval = sent - previous_sent;
-      double intervalRate = countOverInterval / ((now - previous_report_time) / 1000000.0);
+      double intervalRate =
+          countOverInterval / ((now - previous_report_time) / 1000000.0);
       printf("%d ms: Sent %d - %d since last report (%d Hz)\n",
-             (int)(now - start_time) / 1000, sent, countOverInterval, (int) intervalRate);
+             (int)(now - start_time) / 1000, sent, countOverInterval,
+             (int)intervalRate);
 
       previous_sent = sent;
       previous_report_time = now;
@@ -105,12 +97,12 @@ static void send_batch(amqp_connection_state_t conn,
 
     printf("PRODUCER - Message count: %d\n", message_count);
     printf("Total time, milliseconds: %d\n", total_delta / 1000);
-    printf("Overall messages-per-second: %g\n", (message_count / (total_delta / 1000000.0)));
+    printf("Overall messages-per-second: %g\n",
+           (message_count / (total_delta / 1000000.0)));
   }
 }
 
-int main(int argc, char const *const *argv)
-{
+int main(int argc, char const *const *argv) {
   char const *hostname;
   int port, status;
   int rate_limit;
@@ -119,7 +111,8 @@ int main(int argc, char const *const *argv)
   amqp_connection_state_t conn;
 
   if (argc < 5) {
-    fprintf(stderr, "Usage: amqp_producer host port rate_limit message_count\n");
+    fprintf(stderr,
+            "Usage: amqp_producer host port rate_limit message_count\n");
     return 1;
   }
 
@@ -140,15 +133,18 @@ int main(int argc, char const *const *argv)
     die("opening TCP socket");
   }
 
-  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, "guest", "guest"),
+  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,
+                               "guest", "guest"),
                     "Logging in");
   amqp_channel_open(conn, 1);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Opening channel");
 
   send_batch(conn, "test queue", rate_limit, message_count);
 
-  die_on_amqp_error(amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS), "Closing channel");
-  die_on_amqp_error(amqp_connection_close(conn, AMQP_REPLY_SUCCESS), "Closing connection");
+  die_on_amqp_error(amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS),
+                    "Closing channel");
+  die_on_amqp_error(amqp_connection_close(conn, AMQP_REPLY_SUCCESS),
+                    "Closing connection");
   die_on_error(amqp_destroy_connection(conn), "Ending connection");
   return 0;
 }

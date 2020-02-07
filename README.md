@@ -2,6 +2,8 @@
 
 [![Build Status](https://secure.travis-ci.org/alanxz/rabbitmq-c.png?branch=master)](http://travis-ci.org/alanxz/rabbitmq-c)
 
+[![Coverage Status](https://coveralls.io/repos/github/alanxz/rabbitmq-c/badge.svg?branch=master)](https://coveralls.io/github/alanxz/rabbitmq-c?branch=master)
+
 ## Introduction
 
 This is a C-language AMQP client library for use with v2.0+ of the
@@ -10,8 +12,9 @@ This is a C-language AMQP client library for use with v2.0+ of the
  - <http://github.com/alanxz/rabbitmq-c>
 
 Announcements regarding the library are periodically made on the
-rabbitmq-users mailing list:
+rabbitmq-c-users and cross-posted to rabbitmq-users.
 
+ - <https://groups.google.com/forum/#!forum/rabbitmq-c-users>
  - <https://groups.google.com/forum/#!forum/rabbitmq-users>
 
 ## Latest Stable Version
@@ -22,9 +25,9 @@ The latest stable release of rabbitmq-c can be found at:
 
 ## Documentation
 
-API documentation for v0.5.0+ can viewed from:
+API documentation for v0.8.0+ can viewed from:
 
-<http://alanxz.github.io/rabbitmq-c/docs/0.5.0/>
+<http://alanxz.github.io/rabbitmq-c/docs/0.8.0/>
 
 ## Getting started
 
@@ -43,13 +46,13 @@ API documentation for v0.5.0+ can viewed from:
 - *Optionally* [Doxygen](http://www.stack.nl/~dimitri/doxygen/) to build
   developer API documentation.
 
-After downloading and extracting the source from a tarball to a directory.
-([see above][Latest Stable Version]), the commands to build rabbitmq-c on most
+After downloading and extracting the source from a tarball to a directory
+([see above](#latest-stable-version)), the commands to build rabbitmq-c on most
 systems are:
 
     mkdir build && cd build
     cmake ..
-    cmake --build [--config Release] .
+    cmake --build . [--config Release]
 
 The --config Release flag should be used in multi-configuration generators e.g.,
 Visual Studio or XCode.
@@ -79,22 +82,8 @@ Other interesting flags that can be passed to CMake:
    find the XmlTo utility.
 * `ENABLE_SSL_SUPPORT=ON/OFF` toggles building rabbitmq-c with SSL support. By
    default this is ON if the OpenSSL headers and library can be found.
-* `ENABLE_THREAD_SAFETY=ON/OFF` toggles OpenSSL thread-safety. By default this
-   is ON
 * `BUILD_API_DOCS=ON/OFF` - toggles building the Doxygen API documentation, by
    default this is OFF
-
-#### autotools
-
-For legacy purposes, a GNU autotools based build system is also maintained. The required
-utilities you need are autoconf v2.59+, automake v1.9+, libtool v2.2+, and pkg-config.
-
-Then the standard autotools build procedure will build rabbitmq-c:
-
-    autoreconf -i
-    ./configure
-    make
-    make install
 
 ## Running the examples
 

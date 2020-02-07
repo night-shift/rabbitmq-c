@@ -1,4 +1,83 @@
 # Change Log
+## v0.10.0 - 2019-12-01
+## Added:
+- amqp_ssl_socket_get_context can be used to get the current OpenSSL CTX*
+    associated with a connection.
+
+## Changed:
+- openssl: missing OpenSSL config is ignored as an OpenSSL init error (#523)
+- AMQP_DEFAULT_MAX_CHANNELS is now set to 2047 to follow current default channel
+    limit in the RabbitMQ broker. (#513)
+
+## Fixed:
+- add additional input validation to prevent integer overflow when parsing a
+    frame header. This addresses CVE-2019-18609.
+
+
+## v0.9.0 - 2018-05-08
+### Added:
+- amqp-publish: added support for specifying headers via the -H flag
+- Add support for specifying timeout for amqp_login calls via
+  amqp_set_handshake_timeout
+- Add support for specifying timeouts in RPC-style AMQP methods via
+  amqp_set_rpc_timeout
+- Add define for `AMQP_DEFAULT_VHOST`
+- Support for SSL SNI
+- Support for OpenSSL v1.1.0
+
+### Changed:
+- rabbitmq-c now requires Windows Vista or better
+- rabbitmq-c enables TCP keep-alive by default on platforms that support it
+- dropped support for compiling rabbitmq-c without threading support
+- OpenSSL is no longer un-intialized automatically by default. OpenSSL can be
+  explicitly initialized by calling amqp_initialize_ssl_library and
+  uninitialized by calling amqp_uninitialize_ssl_library.
+
+### Fixed:
+- Correct bugs in processing of --url flag in tools (#364).
+- Improve documentation on AMQP_SASL_METHOD_EXTERNAL (#349)
+- Improve support for compiling under mingw-w64
+- Better support for handing SIGPIPE on Linux over SSL (#401)
+- Improve publish performance on Linux by not specifying MSG_MORE on last part
+  of message.
+- Fix connection logic where multiple hostnames won't be tried if connection to
+  doesn't fail immediately (#430)
+
+### Removed:
+- autotools build system has been removed
+- many duplicate amqps_* examples, they did not add a lot of value
+
+
+## v0.8.0 - 2016-04-09
+### Added:
+- SSL: peer certificate and hostname validation can now be controlled separately
+  using `amqp_ssl_socket_set_verify_peer` and
+  `amqp_ssl_socket_set_verify_hostname`.
+- SSL: the desire SSL version range can now be specified using the
+  `amqp_ssl_socket_set_ssl_versions` function.
+- Add flags to SSL examples on controlling hostname verification.
+
+### Changed:
+- SSL: SSLv2, and SSLv3 have been disabled by default.
+- SSL: OpenSSL hostname validation has been improved.
+- Win32 debug information is built with /Z7 on MSVC to embed debug info instead
+  of using a .pdb
+
+### Fixed:
+- Connection failure results in hang on Win32 (#297, #346)
+- Rabbitmq-c may block when attempting to close an SSL socket (#313)
+- amqp_parse_url does not correctly initialize default parameters (#319)
+- x509 objects are leaked in verify_hostname (#323)
+- TCP_NOPUSH doesn't work under cygwin (#335)
+
+### Deprecated
+- SSL: `amqp_ssl_socket_set_verify` is being replaced by
+  `amqp_ssl_socket_set_verify_peer` and `amqp_ssl_socket_set_verify_hostname`.
+
+### Removed:
+- OpenVMS build system and related files.
+- Unmaintained PolarSSL, CyaSSL, and gnuTLS SSL backends
+
 ## Changes since v0.7.0 (a.k.a., v0.7.1)
 - `41fa9df` Autoconf: add missing files in build system
 - `ef73c06` Win32: Use WSAEWOULDBLOCK instead of EWOULDBLOCK on Win32

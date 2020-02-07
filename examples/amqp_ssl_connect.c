@@ -1,4 +1,3 @@
-/* vim:set ft=c ts=2 sw=2 sts=2 et cindent: */
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Version: MIT
@@ -8,6 +7,9 @@
  *
  * Portions created by Mike Steinert are Copyright (c) 2012-2013
  * Mike Steinert. All Rights Reserved.
+ *
+ * Portions created by Bogdan Padalko are Copyright (c) 2013.
+ * Bogdan Padalko. All Rights Reserved.
  *
  * Portions created by VMware are Copyright (c) 2007-2012 VMware, Inc.
  * All Rights Reserved.
@@ -37,37 +39,55 @@
  * ***** END LICENSE BLOCK *****
  */
 
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <stdint.h>
+#include <amqp.h>
 #include <amqp_ssl_socket.h>
-#include <amqp_framing.h>
+
+#include <assert.h>
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <Winsock2.h>
+#else
+#include <sys/time.h>
+#endif
 
 #include "utils.h"
 
-int main(int argc, char const *const *argv)
-{
+int main(int argc, char const *const *argv) {
   char const *hostname;
-  int port, status;
-  char const *exchange;
-  char const *bindingkey;
-  char const *queue;
+  int port;
+  int timeout;
   amqp_socket_t *socket;
   amqp_connection_state_t conn;
+  struct timeval tval;
+  struct timeval *tv;
 
-  if (argc < 6) {
-    fprintf(stderr, "Usage: amqps_bind host port exchange bindingkey queue "
-            "[cacert.pem [key.pem cert.pem]]\n");
+  if (argc < 3) {
+    fprintf(stderr,
+            "Usage: amqps_connect_timeout host port timeout_sec "
+            "[cacert.pem [verifypeer] [verifyhostname] [key.pem cert.pem]]\n");
     return 1;
   }
 
   hostname = argv[1];
   port = atoi(argv[2]);
-  exchange = argv[3];
-  bindingkey = argv[4];
-  queue = argv[5];
+
+  timeout = atoi(argv[3]);
+  if (timeout > 0) {
+    tv = &tval;
+
+    tv->tv_sec = timeout;
+    tv->tv_usec = 0;
+  } else {
+    tv = NULL;
+  }
 
   conn = amqp_new_connection();
 
@@ -76,39 +96,40 @@ int main(int argc, char const *const *argv)
     die("creating SSL/TLS socket");
   }
 
-  if (argc > 6) {
-    status = amqp_ssl_socket_set_cacert(socket, argv[6]);
-    if (status) {
-      die("setting CA certificate");
+  amqp_ssl_socket_set_verify_peer(socket, 0);
+  amqp_ssl_socket_set_verify_hostname(socket, 0);
+
+  if (argc > 5) {
+    int nextarg = 5;
+    die_on_error(amqp_ssl_socket_set_cacert(socket, argv[4]),
+                 "setting CA certificate");
+    if (argc > nextarg && !strcmp("verifypeer", argv[nextarg])) {
+      amqp_ssl_socket_set_verify_peer(socket, 1);
+      nextarg++;
+    }
+    if (argc > nextarg && !strcmp("verifyhostname", argv[nextarg])) {
+      amqp_ssl_socket_set_verify_hostname(socket, 1);
+      nextarg++;
+    }
+    if (argc > nextarg + 1) {
+      die_on_error(
+          amqp_ssl_socket_set_key(socket, argv[nextarg + 1], argv[nextarg]),
+          "setting client key");
     }
   }
 
-  if (argc > 8) {
-    status = amqp_ssl_socket_set_key(socket, argv[8], argv[7]);
-    if (status) {
-      die("setting client cert");
-    }
-  }
+  die_on_error(amqp_socket_open_noblock(socket, hostname, port, tv),
+               "opening SSL/TLS connection");
 
-  status = amqp_socket_open(socket, hostname, port);
-  if (status) {
-    die("opening SSL/TLS connection");
-  }
-
-  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, "guest", "guest"),
+  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,
+                               "guest", "guest"),
                     "Logging in");
-  amqp_channel_open(conn, 1);
-  die_on_amqp_error(amqp_get_rpc_reply(conn), "Opening channel");
 
-  amqp_queue_bind(conn, 1,
-                  amqp_cstring_bytes(queue),
-                  amqp_cstring_bytes(exchange),
-                  amqp_cstring_bytes(bindingkey),
-                  amqp_empty_table);
-  die_on_amqp_error(amqp_get_rpc_reply(conn), "Unbinding");
-
-  die_on_amqp_error(amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS), "Closing channel");
-  die_on_amqp_error(amqp_connection_close(conn, AMQP_REPLY_SUCCESS), "Closing connection");
+  die_on_amqp_error(amqp_connection_close(conn, AMQP_REPLY_SUCCESS),
+                    "Closing connection");
   die_on_error(amqp_destroy_connection(conn), "Ending connection");
+  die_on_error(amqp_uninitialize_ssl_library(), "Uninitializing SSL library");
+
+  printf("Done\n");
   return 0;
 }

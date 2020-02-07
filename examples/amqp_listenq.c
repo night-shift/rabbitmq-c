@@ -1,4 +1,3 @@
-/* vim:set ft=c ts=2 sw=2 sts=2 et cindent: */
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Version: MIT
@@ -34,21 +33,19 @@
  * ***** END LICENSE BLOCK *****
  */
 
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <stdint.h>
-#include <amqp_tcp_socket.h>
 #include <amqp.h>
-#include <amqp_framing.h>
+#include <amqp_tcp_socket.h>
 
 #include <assert.h>
 
 #include "utils.h"
 
-int main(int argc, char const *const *argv)
-{
+int main(int argc, char const *const *argv) {
   char const *hostname;
   int port, status;
   char const *queuename;
@@ -76,47 +73,49 @@ int main(int argc, char const *const *argv)
     die("opening TCP socket");
   }
 
-  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, "guest", "guest"),
+  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,
+                               "guest", "guest"),
                     "Logging in");
   amqp_channel_open(conn, 1);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Opening channel");
 
-  amqp_basic_consume(conn, 1, amqp_cstring_bytes(queuename), amqp_empty_bytes, 0, 0, 0, amqp_empty_table);
+  amqp_basic_consume(conn, 1, amqp_cstring_bytes(queuename), amqp_empty_bytes,
+                     0, 0, 0, amqp_empty_table);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Consuming");
 
-  {
-    while (1) {
-      amqp_rpc_reply_t res;
-      amqp_envelope_t envelope;
+  for (;;) {
+    amqp_rpc_reply_t res;
+    amqp_envelope_t envelope;
 
-      amqp_maybe_release_buffers(conn);
+    amqp_maybe_release_buffers(conn);
 
-      res = amqp_consume_message(conn, &envelope, NULL, 0);
+    res = amqp_consume_message(conn, &envelope, NULL, 0);
 
-      if (AMQP_RESPONSE_NORMAL != res.reply_type) {
-        break;
-      }
-
-      printf("Delivery %u, exchange %.*s routingkey %.*s\n",
-             (unsigned) envelope.delivery_tag,
-             (int) envelope.exchange.len, (char *) envelope.exchange.bytes,
-             (int) envelope.routing_key.len, (char *) envelope.routing_key.bytes);
-
-      if (envelope.message.properties._flags & AMQP_BASIC_CONTENT_TYPE_FLAG) {
-        printf("Content-type: %.*s\n",
-               (int) envelope.message.properties.content_type.len,
-               (char *) envelope.message.properties.content_type.bytes);
-      }
-      printf("----\n");
-
-      amqp_dump(envelope.message.body.bytes, envelope.message.body.len);
-
-      amqp_destroy_envelope(&envelope);
+    if (AMQP_RESPONSE_NORMAL != res.reply_type) {
+      break;
     }
+
+    printf("Delivery %u, exchange %.*s routingkey %.*s\n",
+           (unsigned)envelope.delivery_tag, (int)envelope.exchange.len,
+           (char *)envelope.exchange.bytes, (int)envelope.routing_key.len,
+           (char *)envelope.routing_key.bytes);
+
+    if (envelope.message.properties._flags & AMQP_BASIC_CONTENT_TYPE_FLAG) {
+      printf("Content-type: %.*s\n",
+             (int)envelope.message.properties.content_type.len,
+             (char *)envelope.message.properties.content_type.bytes);
+    }
+    printf("----\n");
+
+    amqp_dump(envelope.message.body.bytes, envelope.message.body.len);
+
+    amqp_destroy_envelope(&envelope);
   }
 
-  die_on_amqp_error(amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS), "Closing channel");
-  die_on_amqp_error(amqp_connection_close(conn, AMQP_REPLY_SUCCESS), "Closing connection");
+  die_on_amqp_error(amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS),
+                    "Closing channel");
+  die_on_amqp_error(amqp_connection_close(conn, AMQP_REPLY_SUCCESS),
+                    "Closing connection");
   die_on_error(amqp_destroy_connection(conn), "Ending connection");
 
   return 0;

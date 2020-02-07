@@ -1,4 +1,3 @@
-/* vim:set ft=c ts=2 sw=2 sts=2 et cindent: */
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Version: MIT
@@ -34,19 +33,17 @@
  * ***** END LICENSE BLOCK *****
  */
 
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <stdint.h>
-#include <amqp_tcp_socket.h>
 #include <amqp.h>
-#include <amqp_framing.h>
+#include <amqp_tcp_socket.h>
 
 #include "utils.h"
 
-int main(int argc, char const *const *argv)
-{
+int main(int argc, char const *const *argv) {
   char const *hostname;
   int port, status;
   char const *exchange;
@@ -55,7 +52,8 @@ int main(int argc, char const *const *argv)
   amqp_connection_state_t conn;
 
   if (argc < 5) {
-    fprintf(stderr, "Usage: amqp_exchange_declare host port exchange exchangetype\n");
+    fprintf(stderr,
+            "Usage: amqp_exchange_declare host port exchange exchangetype\n");
     return 1;
   }
 
@@ -76,17 +74,21 @@ int main(int argc, char const *const *argv)
     die("opening TCP socket");
   }
 
-  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, "guest", "guest"),
+  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,
+                               "guest", "guest"),
                     "Logging in");
   amqp_channel_open(conn, 1);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Opening channel");
 
-  amqp_exchange_declare(conn, 1, amqp_cstring_bytes(exchange), amqp_cstring_bytes(exchangetype),
-                        0, 0, 0, 0, amqp_empty_table);
+  amqp_exchange_declare(conn, 1, amqp_cstring_bytes(exchange),
+                        amqp_cstring_bytes(exchangetype), 0, 0, 0, 0,
+                        amqp_empty_table);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Declaring exchange");
 
-  die_on_amqp_error(amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS), "Closing channel");
-  die_on_amqp_error(amqp_connection_close(conn, AMQP_REPLY_SUCCESS), "Closing connection");
+  die_on_amqp_error(amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS),
+                    "Closing channel");
+  die_on_amqp_error(amqp_connection_close(conn, AMQP_REPLY_SUCCESS),
+                    "Closing connection");
   die_on_error(amqp_destroy_connection(conn), "Ending connection");
   return 0;
 }

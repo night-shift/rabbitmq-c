@@ -1,4 +1,3 @@
-/* vim:set ft=c ts=2 sw=2 sts=2 et cindent: */
 /*
  * Copyright 2015 Alan Antonuk
  *
@@ -38,9 +37,7 @@ static void check_errorstrings(amqp_status_enum start, amqp_status_enum end) {
   for (i = start; i > end; --i) {
     const char* err = amqp_error_string2(i);
     if (0 == strcmp(err, "(unknown error)")) {
-      printf("amqp_status_enum value %s%X",
-             i < 0 ? "-" : "",
-             (unsigned)i);
+      printf("amqp_status_enum value %s%X", i < 0 ? "-" : "", (unsigned)i);
       abort();
     }
   }
